@@ -5,7 +5,9 @@ from dotenv import load_dotenv
 import os
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
-
+from sentence_transformers import SentenceTransformer
+from transformers import pipeline
+from sklearn.metrics.pairwise import cosine_similarity
 
 load_dotenv()
 
@@ -16,10 +18,18 @@ class AskRequest(BaseModel):
     context_text: str = Field(..., min_length=20, description="متن مرجع")
     question: str = Field(..., min_length=5, description="سوال کاربر")
 
+class SentimentRequest(BaseModel):
+    text: str = Field(
+        ...,
+        min_length=5,
+        description="متن برای تحلیل احساس"
+    )
+
+
 app = FastAPI(
     title="Text Summarizer & QA API",
     description="سرویس خلاصه‌سازی و پاسخ به سوال بر اساس متن",
-    version="1.0.0"
+    version="1.1.0"
 )
 
 # client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
@@ -28,6 +38,15 @@ client = OpenAI(
     base_url="https://openrouter.ai/api/v1"
 )
 
+embedding_model =SentenceTransformer(
+
+    "all-MiniLM-L6-v2"
+)
+
+sentiment_model = pipeline(
+    "sentiment-analysis",
+    model="cardiffnlp/twitter-xlm-roberta-base-sentiment"
+)
 
 # -------------------- اندپوینت‌ها (بخش ۴) --------------------
 
@@ -63,6 +82,50 @@ async def summarize(request: SummarizeRequest):
         raise HTTPException(status_code=500, detail=str(e))
 
 
+# Embedding search
+def find_relevant_text(
+        context,
+        question
+):
+
+    sentences = context.split(".")
+
+
+    sentences = [
+        s.strip()
+        for s in sentences
+        if len(s.strip()) > 0
+    ]
+
+
+    context_vectors = embedding_model.encode(
+        sentences
+    )
+
+
+    question_vector = embedding_model.encode(
+        [question]
+    )
+
+
+    scores = cosine_similarity(
+        question_vector,
+        context_vectors
+    )[0]
+
+
+    best_indexes = scores.argsort()[-3:]
+
+
+    result = [
+        sentences[i]
+        for i in best_indexes
+    ]
+
+
+    return ".".join(result)
+
+
 @app.post("/ask")
 async def ask(request: AskRequest):
     try:
@@ -92,3 +155,35 @@ async def ask(request: AskRequest):
         return {"answer": answer}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/sentiment")
+async def sentiment(
+        request: SentimentRequest
+):
+
+    try:
+
+        result = sentiment_model(
+            request.text
+        )[0]
+
+
+        return {
+
+            "sentiment":
+            result["label"],
+
+
+            "score":
+            result["score"]
+
+        }
+
+
+    except Exception as e:
+
+        raise HTTPException(
+            status_code=500,
+            detail=str(e)
+        )

@@ -12,6 +12,7 @@ A FastAPI-based REST API for **text summarization** and **question answering bas
 - 🌐 Simple web interface served with FastAPI
 - ⚙️ Environment variable support for API key management
 - 📖 Automatic interactive API documentation with Swagger UI
+- 😊 Sentiment analysis (positive / neutral / negative) with multilingual support
 
 ## 🛠️ Technologies
 
@@ -247,6 +248,41 @@ The AI is instructed to:
 - `context_text` must contain at least **20 characters**
 - `question` must contain at least **5 characters**
 
+## 3. Sentiment Analysis
+
+### Endpoint
+
+```http
+POST /sentiment
+```
+
+Analyzes the sentiment of a given text using a local multilingual model
+(`cardiffnlp/twitter-xlm-roberta-base-sentiment`).
+
+### Request Body
+
+```json
+{
+  "text": "I really love this project!"
+}
+```
+
+### Example Response
+
+```json
+{
+  "sentiment": "positive",
+  "score": 0.97
+}
+```
+
+### Validation
+
+`text` must contain at least **5 characters**.
+
+> ℹ️ On first run, the sentiment and embedding models are downloaded from
+> Hugging Face (this may take a few minutes and requires several hundred MB of disk space).
+
 ---
 
 # 🤖 AI Model
@@ -321,7 +357,7 @@ No additional API testing tool is required.
 
 # 🔖 Version
 
-**Current Version: v1.0.0**
+**Current Version: v1.1.0**
 
 ### Version History
 

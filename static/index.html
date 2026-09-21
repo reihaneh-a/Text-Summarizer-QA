@@ -111,6 +111,10 @@
     پاسخ به سؤال
 </button>
 
+<button onclick="analyzeSentiment()">
+    تحلیل احساس
+</button>
+
 
 <div id="result" class="result">
     نتیجه اینجا نمایش داده می‌شود...
@@ -217,6 +221,41 @@ async function askQuestion() {
         result.innerText =
             "خطا در ارتباط با سرور: " + error.message;
 
+    }
+}
+
+async function analyzeSentiment() {
+
+    const text = document.getElementById("textInput").value;
+    const result = document.getElementById("result");
+
+    if (text.length < 5) {
+        result.innerText = "لطفاً حداقل ۵ کاراکتر وارد کنید.";
+        return;
+    }
+
+    result.innerText = "⏳ در حال تحلیل احساس...";
+
+    try {
+        const response = await fetch("/sentiment", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ text: text })
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            result.innerText = "خطا: " + data.detail;
+            return;
+        }
+
+        result.innerText =
+            "احساس: " + data.sentiment +
+            "\nاطمینان: " + (data.score * 100).toFixed(1) + "٪";
+
+    } catch (error) {
+        result.innerText = "خطا در ارتباط با سرور: " + error.message;
     }
 }
 
