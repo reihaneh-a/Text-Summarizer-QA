@@ -351,3 +351,9 @@ Possible future improvements include:
 # 📄 License
 
 This project is provided for educational and development purposes.
+
+Contact
+If you have any questions, feedback, or need assistance, please feel free to reach out:
+
+Email: reihaneh.abbasi.h@gmail.com    
+We look forward to your collaboration in improving this application!
